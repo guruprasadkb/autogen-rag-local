@@ -1,0 +1,60 @@
+sequenceDiagram
+    participant User
+    participant GuruRAGSystem as GURU System
+    participant DocProcessor as Document Processor
+    participant Embeddings as Embedding Manager
+    participant VectorDB as Vector Store
+    participant LLM as Ollama LLM
+    participant Agent as Agent Manager
+
+    User->>GuruRAGSystem: Start System
+
+    GuruRAGSystem->>Embeddings: Initialize Embedding Model
+    Embeddings-->>GuruRAGSystem: Model Ready
+
+    GuruRAGSystem->>LLM: Connect to Ollama
+    LLM-->>GuruRAGSystem: Connection Status
+
+    GuruRAGSystem->>DocProcessor: Load Documents
+    DocProcessor->>DocProcessor: Read PDFs
+    DocProcessor->>DocProcessor: Extract Text
+    DocProcessor-->>GuruRAGSystem: Raw Documents
+
+    GuruRAGSystem->>DocProcessor: Process Documents
+    DocProcessor->>DocProcessor: Split into Chunks
+    DocProcessor->>DocProcessor: Add Metadata
+    DocProcessor-->>GuruRAGSystem: Processed Chunks
+
+    GuruRAGSystem->>VectorDB: Initialize Vector Store
+    VectorDB->>VectorDB: Create/Load Collection
+    VectorDB-->>GuruRAGSystem: Store Ready
+
+    GuruRAGSystem->>VectorDB: Index Documents
+    VectorDB->>Embeddings: Generate Embeddings
+    Embeddings-->>VectorDB: Document Embeddings
+    VectorDB->>VectorDB: Store Vectors & Metadata
+    VectorDB-->>GuruRAGSystem: Indexing Complete
+
+    GuruRAGSystem->>Agent: Setup Agents
+    Agent->>Agent: Initialize Assistant
+    Agent->>Agent: Setup Custom Reply Function
+    Agent-->>GuruRAGSystem: Agents Ready
+
+    GuruRAGSystem-->>User: System Ready for Queries
+
+    loop Conversation
+        User->>GuruRAGSystem: Ask Question
+        GuruRAGSystem->>VectorDB: Retrieve Relevant Context
+        VectorDB->>Embeddings: Encode Query
+        Embeddings-->>VectorDB: Query Embedding
+        VectorDB->>VectorDB: Search Similar Documents
+        VectorDB-->>GuruRAGSystem: Relevant Documents
+
+        GuruRAGSystem->>Agent: Generate Response
+        Agent->>LLM: Send Query + Context + CoT Instructions
+        LLM->>LLM: Chain of Thought Reasoning
+        LLM-->>Agent: Full Response with [THINKING] and [ANSWER]
+        Agent-->>GuruRAGSystem: Formatted Answer
+
+        GuruRAGSystem-->>User: Display Final Answer
+    end
